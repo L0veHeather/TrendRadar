@@ -1,28 +1,17 @@
 安全
 
 越南
-
 印度
-
 马来西亚
-
 穆斯林
-
-回族
-
-DeepSeek
-
-华为
+台湾
 
 比亚迪
-王传福
 
 大疆
 DJI
 
 宇树
-王兴兴
-
 智元
 灵犀
 
@@ -30,34 +19,20 @@ DJI
 !车
 !餐
 
-
-京东
-
-字节
-bytedance
-
-
 特斯拉
 马斯克
 
 微软
-Microsoft
-
 英伟达
 NVIDIA
-黄仁勋
-
 AMD
-
 谷歌
 google
 gemini
 deepmind
-
 chatgpt
 openai
 sora
-
 claude
 Anthropic
 
@@ -65,24 +40,20 @@ iphone
 ipad
 mac
 ios
+苹果
 
 ai
 !gai
 人工智能
-
 自动驾驶
-
 机器人
 
-国产
-中国
 
 美国
 日本
 韩国
 
 芯片
-光刻机
 
 科技
 
@@ -91,17 +62,10 @@ ai
 水电站
 雅鲁藏布江
 
-新质生产力
-
-月球
-登月
-火星
-宇宙
-飞船
-航空
-
 暗物质
 三花智控
-苹果
-三星
+
+!淘宝
+
+
 
