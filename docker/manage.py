@@ -432,12 +432,11 @@ def start_webserver():
         return
 
     try:
-        # 启动 HTTP 服务器
+        # 启动 Web 服务器 (使用新的 Flask 管理界面)
         # 使用 --bind 绑定到 0.0.0.0 使容器内部可访问
-        # 工作目录限制在 WEBSERVER_DIR，防止访问其他目录
         process = subprocess.Popen(
-            [sys.executable, '-m', 'http.server', str(WEBSERVER_PORT), '--bind', '0.0.0.0'],
-            cwd=WEBSERVER_DIR,
+            [sys.executable, 'main.py', '--web', '--port', str(WEBSERVER_PORT)],
+            cwd="/app",
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
             start_new_session=True
@@ -452,10 +451,10 @@ def start_webserver():
             with open(WEBSERVER_PID_FILE, 'w') as f:
                 f.write(str(process.pid))
 
-            print(f"  ✅ Web 服务器已启动 (PID: {process.pid})")
-            print(f"  📁 服务目录: {WEBSERVER_DIR} (只读，仅静态文件)")
+            print(f"  ✅ Web 管理界面已启动 (PID: {process.pid})")
+            print(f"  📁 功能: 仪表盘 / 配置管理 / 手动执行 / 历史查看")
             print(f"  🌐 访问地址: http://localhost:{WEBSERVER_PORT}")
-            print(f"  📄 首页: http://localhost:{WEBSERVER_PORT}/index.html")
+            print(f"  📄 首页: http://localhost:{WEBSERVER_PORT}/")
             print("  💡 停止服务: python manage.py stop_webserver")
         else:
             print(f"  ❌ Web 服务器启动失败")

@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <h2>配置管理</h2>
+        <div>
+            <div class="btn-group" role="group">
+                <a href="/config?file=config.yaml"
+                    class="btn btn-outline-primary {% if current_file == 'config.yaml' %}active{% endif %}">config.yaml</a>
+                <a href="/config?file=frequency_words.txt"
+                    class="btn btn-outline-primary {% if current_file == 'frequency_words.txt' %}active{% endif %}">frequency_words.txt</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <form action="/config" method="post">
+            <input type="hidden" name="filename" value="{{ current_file }}">
+            <div class="card">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <span class="text-muted"><i class="fas fa-file-code"></i> {{ current_file }}</span>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> 保存修改</button>
+                </div>
+                <div class="card-body p-0">
+                    <textarea class="form-control font-monospace border-0" name="content" rows="25"
+                        style="background-color: #f8f9fa;">{{ content }}</textarea>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if message %}
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+    <div id="liveToast" class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+            <strong class="me-auto">提示</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body">
+            {{ message }}
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

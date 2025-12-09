@@ -5520,7 +5520,31 @@ class NewsAnalyzer:
             raise
 
 
+
 def main():
+    # 命令行参数解析
+    if len(sys.argv) > 1 and (sys.argv[1] == '--web' or '--web' in sys.argv):
+        try:
+            import argparse
+            parser = argparse.ArgumentParser(description='TrendRadar News Analyzer')
+            parser.add_argument('--web', action='store_true', help='Start Web UI')
+            parser.add_argument('--port', type=int, default=8080, help='Web UI Port')
+            args, _ = parser.parse_known_args()
+            
+            print(f"🌐 正在启动 Web 管理界面 (端口 {args.port})...")
+            try:
+                from web_server import start_server
+                start_server(port=args.port)
+            except ImportError as e:
+                print(f"❌启动失败: 缺少依赖或文件 ({e})")
+                print("请先安装 flask: pip install flask")
+            except Exception as e:
+                print(f"❌启动错误: {e}")
+            return
+        except Exception as e:
+            print(f"参数解析错误: {e}")
+            return
+
     try:
         analyzer = NewsAnalyzer()
         analyzer.run()
