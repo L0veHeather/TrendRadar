@@ -106,6 +106,7 @@ notification:
     ntfy_token: "" # ntfy访问令牌（可选，用于私有主题，多账号用 ; 分隔）
     bark_url: "" # Bark推送URL（多账号用 ; 分隔，格式：https://api.day.app/your_device_key 或自建服务器地址）
     slack_webhook_url: "" # Slack Incoming Webhook URL（多账号用 ; 分隔，格式：https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX）
+    custom_webhook_url: "" # 自定义 Webhook URL（多账号用 ; 分隔，支持任意 HTTP POST 接口）
 
 # 用于让关注度更高的新闻在更前面显示，即用算法重新组合不同平台的热搜排序形成你侧重的热搜，合起来是 1 就行
 weight:

@@ -386,6 +386,17 @@ def load_config():
         slack_source = "环境变量" if os.environ.get("SLACK_WEBHOOK_URL") else "配置文件"
         notification_sources.append(f"Slack({slack_source}, {count}个账号)")
 
+    # 自定义Webhook配置
+    config["CUSTOM_WEBHOOK_URL"] = os.environ.get("CUSTOM_WEBHOOK_URL", "").strip() or webhooks.get(
+        "custom_webhook_url", ""
+    )
+
+    if config["CUSTOM_WEBHOOK_URL"]:
+        accounts = parse_multi_account_config(config["CUSTOM_WEBHOOK_URL"])
+        count = min(len(accounts), max_accounts)
+        custom_source = "环境变量" if os.environ.get("CUSTOM_WEBHOOK_URL") else "配置文件"
+        notification_sources.append(f"自定义Webhook({custom_source}, {count}个账号)")
+
     if notification_sources:
         print(f"通知渠道配置来源: {', '.join(notification_sources)}")
         print(f"每个渠道最大账号数: {max_accounts}")
@@ -3955,6 +3966,20 @@ def send_to_notifications(
                 slack_results.append(result)
         results["slack"] = any(slack_results) if slack_results else False
 
+    # 发送到自定义Webhook（多账号）
+    custom_urls = parse_multi_account_config(CONFIG["CUSTOM_WEBHOOK_URL"])
+    if custom_urls:
+        custom_urls = limit_accounts(custom_urls, max_accounts, "自定义Webhook")
+        custom_results = []
+        for i, url in enumerate(custom_urls):
+            if url:
+                account_label = f"账号{i+1}" if len(custom_urls) > 1 else ""
+                result = send_to_custom_webhook(
+                    url, report_data, report_type, update_info_to_send, proxy_url, mode, account_label
+                )
+                custom_results.append(result)
+        results["custom_webhook"] = any(custom_results) if custom_results else False
+
     # 发送邮件（保持原有逻辑，已支持多收件人）
     email_from = CONFIG["EMAIL_FROM"]
     email_password = CONFIG["EMAIL_PASSWORD"]
@@ -4872,6 +4897,89 @@ def send_to_slack(
 
     print(f"{log_prefix}所有 {len(batches)} 批次发送完成 [{report_type}]")
     return True
+
+
+def send_to_custom_webhook(
+    webhook_url: str,
+    report_data: Dict,
+    report_type: str,
+    update_info: Optional[Dict] = None,
+    proxy_url: Optional[str] = None,
+    mode: str = "daily",
+    account_label: str = "",
+) -> bool:
+    """发送到自定义Webhook（支持分批发送，发送 JSON 格式数据）"""
+    headers = {"Content-Type": "application/json"}
+    proxies = None
+    if proxy_url:
+        proxies = {"http": proxy_url, "https": proxy_url}
+
+    # 日志前缀
+    log_prefix = f"自定义Webhook{account_label}" if account_label else "自定义Webhook"
+
+    # 获取分批内容（使用通用批次大小），预留批次头部空间
+    custom_batch_size = CONFIG.get("MESSAGE_BATCH_SIZE", 4000)
+    header_reserve = _get_max_batch_header_size("wework")  # 使用 wework 格式作为基础
+    batches = split_content_into_batches(
+        report_data, "wework", update_info, max_bytes=custom_batch_size - header_reserve, mode=mode
+    )
+
+    # 统一添加批次头部（已预留空间，不会超限）
+    batches = add_batch_headers(batches, "wework", custom_batch_size)
+
+    print(f"{log_prefix}消息分为 {len(batches)} 批次发送 [{report_type}]")
+
+    # 逐批发送
+    for i, batch_content in enumerate(batches, 1):
+        batch_size = len(batch_content.encode("utf-8"))
+        print(
+            f"发送{log_prefix}第 {i}/{len(batches)} 批次，大小：{batch_size} 字节 [{report_type}]"
+        )
+
+        # 构建自定义 webhook payload
+        # 发送纯文本内容和结构化数据
+        now = get_beijing_time()
+        payload = {
+            "report_type": report_type,
+            "timestamp": now.strftime("%Y-%m-%d %H:%M:%S"),
+            "mode": mode,
+            "batch_index": i,
+            "total_batches": len(batches),
+            "content": batch_content,
+            "data": {
+                "total_keywords": len(report_data["stats"]),
+                "total_new_count": report_data.get("total_new_count", 0),
+                "failed_platforms": report_data.get("failed_ids", [])
+            }
+        }
+
+        if update_info:
+            payload["update_info"] = update_info
+
+        try:
+            response = requests.post(
+                webhook_url, headers=headers, json=payload, proxies=proxies, timeout=30
+            )
+            
+            # 自定义 webhook 成功判断：状态码 2xx 即为成功
+            if 200 <= response.status_code < 300:
+                print(f"{log_prefix}第 {i}/{len(batches)} 批次发送成功 [{report_type}]，状态码：{response.status_code}")
+                # 批次间间隔
+                if i < len(batches):
+                    time.sleep(CONFIG["BATCH_SEND_INTERVAL"])
+            else:
+                error_msg = response.text if response.text else f"状态码：{response.status_code}"
+                print(
+                    f"{log_prefix}第 {i}/{len(batches)} 批次发送失败 [{report_type}]，错误：{error_msg}"
+                )
+                return False
+        except Exception as e:
+            print(f"{log_prefix}第 {i}/{len(batches)} 批次发送出错 [{report_type}]：{e}")
+            return False
+
+    print(f"{log_prefix}所有 {len(batches)} 批次发送完成 [{report_type}]")
+    return True
+
 
 
 # === 主分析器 ===
